@@ -57,7 +57,6 @@ function start() {
             case 'QUIT':
                 connection.end();
                 break;
-
         }
     });
 };
@@ -194,24 +193,24 @@ function view() {
         name: 'action',
         message: 'Select option',
         choices: [
-            'Department',
-            'Role',
-            'Employee',
+            'Departments',
+            'Roles',
+            'Employees',
             'Employees by manager.',
             'Utilized budget by department.',
-            '<-Back'
+            '<- Back'
         ],
     }];
     inquirer.prompt(questions).then(answers => {
         switch (answers.action) {
-            case 'Department':
-                viewDepartment();
+            case 'Departments':
+                viewDepartments();
                 break;
-            case 'Role':
-                viewRole();
+            case 'Roles':
+                viewRoles();
                 break;
-            case 'Employee':
-                viewEmployee();
+            case 'Employees':
+                viewEmployees();
                 break;
             case 'Employees by manager.':
                 viewEmployeesByManager();
@@ -219,22 +218,24 @@ function view() {
             case 'Utilized budget by department.':
                 viewUtilizedBudgetByDepartment();
                 break;
-            case '<-Back':
+            case '<- Back':
                 start();
                 break;
         }
     });
 };
 
-function viewDepartment() {
-
+function viewDepartments() {
+    dbhelper.selectAll("department", dbhelper.displayTable);
 };
 
-function viewRole() {
-
+function viewRoles() {
+    dbhelper.innerLeftJoin("role", "department",
+        "role.title as role, role.salary , department.name as department",
+        "role.department_id = department.id", dbhelper.displayTable);
 };
 
-function viewEmployee() {
+function viewEmployees() {
 
 };
 
