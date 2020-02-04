@@ -95,23 +95,14 @@ function add() {
     });
 };
 
-function selectAllFromTable(table, cb) {
-    connection.query(
-        `SELECT * FROM ${table}`,
-        function(err, res) {
-            if (err) throw err;
-            let tb = cTable.getTable(res);
-            console.log(tb);
-            cb();
-        }
-    );
-};
-
 function addDepartment() {
     dbhelper.selectAll("department", inquireDepartment);
 };
 
-function inquireDepartment() {
+function inquireDepartment(tbl) {
+    let tb = cTable.getTable(tbl);
+    console.log("Current Departments")
+    console.log(tb);
     const questions = [{
         type: 'input',
         name: 'name',
@@ -135,10 +126,18 @@ function inquireDepartment() {
 };
 
 function addRole() {
-    selectAllFromTable("role", inquireRole);
+    // query departments and id's for role department choices
+    dbhelper.selectAll("department", inquireRole);
 };
 
-function inquireRole() {
+function inquireRole(tbl) {
+    let tb = cTable.getTable(tbl);
+    console.log(tb);
+
+    const choices = tbl.map(e => {
+        return e.name;
+    });
+
     const questions = [{
             type: 'input',
             name: 'title',
@@ -159,16 +158,22 @@ function inquireRole() {
             }
         },
         {
-
+            type: 'list',
+            name: 'dept',
+            message: 'Select department for role.',
+            choices: choices
         }
     ];
     inquirer.prompt(questions).then(answers => {
-        console.log(answers.title);
+        // console.log(answers.title);
+        let i = tbl.findIndex(obj => obj.name === answers.dept);
+        console.log(i, tbl[i]);
+
         connection.query(
-            "INSERT INTO role (title, salary, department_id) VALUES (?)", [answers.title, answers.salary, answers.department_id],
+            "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)", [answers.title, answers.salary, tbl[i].id],
             function(err, res) {
                 if (err) throw err;
-                console.log(`${answers.title} sucessfully added to database.`);
+                console.log(`${answers.title} role sucessfully added to ${answers.dept} department.`);
                 add();
             }
         );
