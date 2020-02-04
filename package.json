@@ -1,0 +1,25 @@
+{
+    "name": "fictional-broccoli",
+    "version": "1.0.0",
+    "description": "content managment system ",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/krpharr/fictional-broccoli.git"
+    },
+    "author": "rhparr@richmond.edu",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/krpharr/fictional-broccoli/issues"
+    },
+    "homepage": "https://github.com/krpharr/fictional-broccoli#readme",
+    "dependencies": {
+        "console.table": "^0.10.0",
+        "inquirer": "^7.0.4",
+        "mysql": "^2.18.1",
+        "validator": "^12.2.0"
+    }
+}
