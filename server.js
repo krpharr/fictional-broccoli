@@ -85,7 +85,6 @@ function add() {
 };
 
 function selectAllFromTable(table, cb) {
-
     connection.query(
         `SELECT * FROM ${table}`,
         function(err, res) {
@@ -95,7 +94,6 @@ function selectAllFromTable(table, cb) {
             cb();
         }
     );
-
 };
 
 function addDepartment() {
@@ -126,8 +124,45 @@ function inquireDepartment() {
 };
 
 function addRole() {
-
+    selectAllFromTable("role", inquireRole);
 };
+
+function inquireRole() {
+    const questions = [{
+            type: 'input',
+            name: 'title',
+            message: 'Enter title for new role.',
+            validate: function(value) {
+                var valid = !validator.isEmpty(value);
+                return valid || 'Role title can not be empty.';
+            }
+        },
+        {
+            type: 'input',
+            name: 'salary',
+            message: 'Salary:',
+            validate: function(value) {
+                if (validator.isEmpty(value)) return "Salary can not be empty.";
+                var valid = validator.isDecimal(value);
+                return valid || 'must be a valid year';
+            }
+        },
+        {
+
+        }
+    ];
+    inquirer.prompt(questions).then(answers => {
+        console.log(answers.title);
+        connection.query(
+            "INSERT INTO role (title, salary, department_id) VALUES (?)", [answers.title, answers.salary, answers.department_id],
+            function(err, res) {
+                if (err) throw err;
+                console.log(`${answers.title} sucessfully added to database.`);
+                add();
+            }
+        );
+    });
+}
 
 function addEmployee() {
 
