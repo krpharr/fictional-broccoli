@@ -2,10 +2,11 @@ const inquirer = require("inquirer");
 const cTable = require("console.table");
 const mysql = require("mysql");
 const validator = require("validator");
+const DbHelper = require("./lib/DbHelper");
 
-let connection;
+let dbhelper;
 
-connection = mysql.createConnection({
+const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
     user: "root",
@@ -16,6 +17,7 @@ connection = mysql.createConnection({
 connection.connect(function(err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
+    dbhelper = new DbHelper(connection);
     start();
 });
 
@@ -33,7 +35,9 @@ function start() {
         choices: [
             'ADD',
             'VIEW',
-            'UPDATE'
+            'UPDATE',
+            'DELETE',
+            'QUIT'
         ],
     }];
     inquirer.prompt(questions).then(answers => {
@@ -47,6 +51,13 @@ function start() {
             case 'UPDATE':
                 update();
                 break;
+            case 'DELETE':
+                remove();
+                break;
+            case 'QUIT':
+                connection.end();
+                break;
+
         }
     });
 };
@@ -97,7 +108,7 @@ function selectAllFromTable(table, cb) {
 };
 
 function addDepartment() {
-    selectAllFromTable("department", inquireDepartment);
+    dbhelper.selectAll("department", inquireDepartment);
 };
 
 function inquireDepartment() {
@@ -268,6 +279,11 @@ function updateEmployeeManager() {
 };
 
 ///////////////////////////////////////////////////////////////////////
+
+function remove() {
+
+};
+
 // function login() {
 //     const questions = [{
 //             type: 'input',
