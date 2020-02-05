@@ -103,6 +103,12 @@ INNER JOIN employee m
 ON e.manager_id = m.id
 ORDER BY e.manager_id;
      
-     
+SELECT e.id, r.salary,d.name, 
+FROM employee e   
+INNER JOIN role r
+ON e.role_id = r.id
+INNER JOIN department d
+ON r.department_id = d.id         
+GROUP BY d.name;     
 
 

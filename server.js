@@ -270,17 +270,77 @@ ORDER BY e.manager_id;
 };
 
 function inquireEmployeesByManager(table) {
-    console.log(table);
-    const managers = table.map((e, i) => {
-        if (e.manager !== table[i - 1].manager) {
-            return e.manager;
+    let last = '';
+    const managers = [];
+    table.forEach((e, i) => {
+        if (e.manager !== last) {
+            last = e.manager;
+            managers.push(e.manager);
         }
     });
-    console.log(managers);
+    const questions = [{
+        type: 'list',
+        name: 'action',
+        message: 'Select manager:',
+        choices: managers,
+    }];
+    inquirer.prompt(questions).then(answers => {
+        let rows = table.filter(e => {
+            return e.manager === answers.action;
+        });
+        dbhelper.displayTable(rows);
+        start();
+    });
 };
 
 function viewUtilizedBudgetByDepartment() {
+    dbhelper.selectAll("department", inquireDepartment);
+};
 
+function inquireDepartment(table) {
+    /////inquirer code
+    let last = '';
+    const departments = [];
+    table.forEach((e, i) => {
+        if (e.name !== last) {
+            last = e.name;
+            departments.push(e.name);
+        }
+    });
+    const questions = [{
+        type: 'list',
+        name: 'action',
+        message: 'Select department:',
+        choices: departments,
+    }];
+    inquirer.prompt(questions).then(answers => {
+        let rows = table.filter(e => {
+            return e.name === answers.action;
+        });
+
+        let action = answers.action;
+        let query = `SELECT e.id, r.salary, d.name
+    FROM employee e   
+    INNER JOIN role r
+    ON e.role_id = r.id
+    INNER JOIN department d
+    ON r.department_id = d.id
+    WHERE d.name = "${action}";`;
+        dbhelper.query(query, calcBudget);
+    });
+
+};
+
+function calcBudget(table) {
+    console.log(table);
+    let bArray = table.map(e => {
+        return e.salary;
+    });
+    console.log(bArray);
+    let budget = bArray.reduce((total, num) => {
+        return total + num;
+    });
+    console.log(budget);
 };
 
 ///////////////////////////////////////////
