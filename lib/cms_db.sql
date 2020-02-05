@@ -8,6 +8,10 @@ CREATE TABLE employee (
     last_name VARCHAR(30) NOT NULL,
     role_id INT NOT NULL,
     manager_id INT,
+    FOREIGN KEY (role_id) 
+        REFERENCES role(id),
+	FOREIGN KEY (manager_id) 
+        REFERENCES employee(id),
     PRIMARY KEY (id)
 );
 
@@ -22,6 +26,8 @@ CREATE TABLE role (
 	title VARCHAR(30) NOT NULL,
     salary DECIMAL NOT NULL,
     department_id INT NOT NULL,
+    FOREIGN KEY (department_id) 
+        REFERENCES department(id),
 	PRIMARY KEY (id)
 );
 
@@ -51,8 +57,8 @@ INSERT INTO role (title, salary, department_id) VALUES ("Help Desk Analyst", 450
 
 SELECT * FROM role;
 
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Bob", "Control", 1, NULL);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Computer", 3, 1);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Bob", "Peckman", 1, NULL);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Frommovie", 3, 1);
 
 SELECT * FROM employee;
 
@@ -69,10 +75,27 @@ select first_name, last_name, name, title, salary, manager_id
 from employee as e, department as d, role as r
 where d.id = r.department_id and e.role_id = r.id;
 
-select e.first_name, e.last_name, d.name, r.title, r.salary, m.last_name as manager
+select e.id as ID, e.first_name as 'First Name', e.last_name as 'Last Name', d.name as Department, r.title as Role, r.salary as Salary, manager_id as 'Manager ID'
+from employee as e, department as d, role as r
+where d.id = r.department_id and e.role_id = r.id;
+
+select e.id as ID, e.first_name as 'First Name', e.last_name as 'Last Name', d.name as Department, r.title as Role, r.salary as Salary, concat(m.first_name, ' ', m.last_name)  as 'Manager'
 from employee as e, department as d, role as r, employee as m
-where d.id = r.department_id and e.role_id = r.id and m.id = e.manager_id;
+where d.id = r.department_id and e.role_id = r.id;
 
-
+SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
+	   d.name as department,
+       r.title,r.salary, 
+       concat(m.first_name, ' ', m.last_name) as manager
+  FROM employee e 
+    INNER JOIN role r
+     ON e.role_id=r.id
+    INNER JOIN department d
+     ON r.department_id = d.id
+     LEFT OUTER JOIN employee m
+     ON e.manager_id = m.id
+      ORDER BY r.salary DESC;
+     
+     
 
 

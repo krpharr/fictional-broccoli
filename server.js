@@ -236,9 +236,18 @@ function viewRoles() {
 };
 
 function viewEmployees() {
-    let query = `select e.id, e.first_name, e.last_name, d.name, r.title, r.salary, e.manager_id
-    from employee as e, department as d, role as r, employee as m
-    where d.id = r.department_id and e.role_id = r.id;`;
+    let query = `SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
+    d.name as department,
+    r.title,r.salary, 
+    concat(m.first_name, ' ', m.last_name) as manager
+FROM employee e 
+ INNER JOIN role r
+  ON e.role_id=r.id
+ INNER JOIN department d
+  ON r.department_id = d.id
+  LEFT OUTER JOIN employee m
+  ON e.manager_id = m.id
+   ORDER BY r.salary DESC;`;
 
     dbhelper.query(query, dbhelper.displayTable);
 
