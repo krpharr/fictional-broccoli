@@ -325,22 +325,27 @@ function inquireDepartment(table) {
     ON e.role_id = r.id
     INNER JOIN department d
     ON r.department_id = d.id
-    WHERE d.name = "${action}";`;
+    WHERE d.name = "${answers.action}";`;
         dbhelper.query(query, calcBudget);
     });
 
 };
 
 function calcBudget(table) {
-    console.log(table);
+    let dept = table[0].name;
     let bArray = table.map(e => {
         return e.salary;
     });
-    console.log(bArray);
     let budget = bArray.reduce((total, num) => {
         return total + num;
     });
-    console.log(budget);
+
+    let budgetTable = [{
+        department: dept,
+        "utilized budget": budget
+    }];
+    dbhelper.displayTable(budgetTable);
+
 };
 
 ///////////////////////////////////////////
