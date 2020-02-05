@@ -21,7 +21,6 @@ connection.connect(function(err) {
     start();
 });
 
-
 function start() {
     let msg = `
     ADD - add departments, roles, and employees.
@@ -241,20 +240,43 @@ function viewEmployees() {
     r.title,r.salary, 
     concat(m.first_name, ' ', m.last_name) as manager
 FROM employee e 
- INNER JOIN role r
-  ON e.role_id=r.id
- INNER JOIN department d
-  ON r.department_id = d.id
-  LEFT OUTER JOIN employee m
-  ON e.manager_id = m.id
-   ORDER BY r.salary DESC;`;
+INNER JOIN role r
+ ON e.role_id=r.id
+INNER JOIN department d
+ ON r.department_id = d.id
+LEFT OUTER JOIN employee m
+ ON e.manager_id = m.id
+ORDER BY r.salary DESC;`;
 
     dbhelper.query(query, dbhelper.displayTable);
 
 };
 
 function viewEmployeesByManager() {
+    let query = `SELECT e.id, concat(e.first_name, ' ', e.last_name) as employee, 
+d.name as department,
+r.title,r.salary, 
+concat(m.first_name, ' ', m.last_name) as manager
+FROM employee e
+INNER JOIN role r
+ON e.role_id=r.id
+INNER JOIN department d
+ON r.department_id = d.id
+INNER JOIN employee m
+ON e.manager_id = m.id
+ORDER BY e.manager_id;
+ `;
+    dbhelper.query(query, inquireEmployeesByManager);
+};
 
+function inquireEmployeesByManager(table) {
+    console.log(table);
+    const managers = table.map((e, i) => {
+        if (e.manager !== table[i - 1].manager) {
+            return e.manager;
+        }
+    });
+    console.log(managers);
 };
 
 function viewUtilizedBudgetByDepartment() {
