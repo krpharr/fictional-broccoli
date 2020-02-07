@@ -13,10 +13,11 @@ CREATE TABLE role (
 	title VARCHAR(30) NOT NULL,
     salary DECIMAL NOT NULL,
     department_id INT NOT NULL,
+    CONSTRAINT `fk_role_department`
     FOREIGN KEY (department_id) 
         REFERENCES department(id)
         ON UPDATE CASCADE
-        ON DELETE CASCADE,
+        ON DELETE RESTRICT,
 	PRIMARY KEY (id)
 );
 
@@ -26,10 +27,16 @@ CREATE TABLE employee (
     last_name VARCHAR(30) NOT NULL,
     role_id INT NOT NULL,
     manager_id INT NULL,
+    CONSTRAINT `fk_employee_role`
     FOREIGN KEY (role_id) 
-        REFERENCES role(id),
+        REFERENCES role(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+	CONSTRAINT `fk_employee_manager`
 	FOREIGN KEY (manager_id) 
-        REFERENCES employee(id),
+        REFERENCES employee(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL,
     PRIMARY KEY (id)
 );
 
@@ -51,7 +58,19 @@ INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Fred"
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Nancy", "Drew", 6, 3);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Clark", "Kent", 6, 3);
 
-DELETE FROM role WHERE id = 4;
+SELECT e.id, e.last_name, d.name as dept
+FROM employee AS e
+INNER JOIN role as r
+ON r.id = e.role_id
+INNER JOIN department as d
+ON r.department_id = d.id;
+WHERE e.manager_id = NULL;
+
+DELETE FROM role WHERE id = 1;
+DELETE FROM department WHERE id = 1;
+DELETE FROM employee WHERE id = 1;
+
+UPDATE role SET salary = "82000.00" WHERE id = 2;
 
 -- INSERT INTO department (name) VALUES ("Marketing");
 -- INSERT INTO department (name) VALUES ("Finance");
@@ -74,7 +93,7 @@ DELETE FROM role WHERE id = 4;
 
 select * FROM department;
 
-SELECT * FROM role;
+SELECT * FROM role WHERE department_id = ;
 
 SELECT * FROM employee;
 

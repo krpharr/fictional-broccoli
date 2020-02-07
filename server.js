@@ -184,21 +184,23 @@ function addEmployee() {
 
 function inquireDepartmentForEmployee(deptTable) {
     dbhelper.displayTable(deptTable);
-    let depts = deptTable.map(e => {
-        return [e.id, e.name];
+    const depts = deptTable.map(e => {
+        return e.name;
     });
     const questions = [{
         type: 'list',
         name: 'department',
         message: 'Choose department for new employee.',
-        choices: depts[1],
+        choices: depts,
     }];
     inquirer.prompt(questions).then(answers => {
-        let query = `SELECT * FROM role WHERE department_id = (${answers.department[0]})`;
+        let i = depts.findIndex(obj => obj === answers.department);
+        let deptID = deptTable[i].id;
+        let query = `SELECT * FROM role WHERE department_id = (${deptID})`;
         dbhelper.query(query, res => {
             dbhelper.displayTable(res);
-            let roles = res.map(e => {
-                return [e.id, e.title]
+            const roles = res.map(e => {
+                return e.title;
             });
             const questions2 = [{
                 type: 'list',
@@ -207,15 +209,81 @@ function inquireDepartmentForEmployee(deptTable) {
                 choices: roles,
             }];
             inquirer.prompt(questions2).then(ans => {
-
-                console.log(ans);
+                let i = roles.findIndex(obj => obj === ans.title);
+                let roleID = res[i].id;
+                inquireManager(deptID, roleID);
             });
         });
     });
 };
 
-function inquireEmployeeData() {
+function inquireManager(deptID, roleID) {
+    // get employee id, manager_id, and department and filter out managers for desired deptarment
+    let query = `SELECT e.id, e.first_name, e.last_name, e.manager_id, r.title, d.name as dept, d.id as dept_id
+    FROM employee AS e
+    INNER JOIN role as r
+    ON r.id = e.role_id
+    INNER JOIN department as d
+    ON r.department_id = d.id;`;
+    dbhelper.query(query, res => {
+        // console.log(res);
+        let managers = res.filter(obj => obj.manager_id === null && obj.dept_id === deptID);
+        let choices = managers.map(obj => {
+            return `${obj.first_name} ${obj.last_name}`;
+        });
+        choices.push("SKIP");
+        console.log(managers);
+        console.log(choices);
+        const questions = [{
+            type: 'list',
+            name: 'manager',
+            message: 'Choose manager for new employee.',
+            choices: choices,
+        }];
+        inquirer.prompt(questions).then(ans => {
+            console.log(ans);
+            if (ans.manager = "SKIP") {
+                inquireEmployeeData(roleID, null);
+            };
+            let i = choices.findIndex(obj => obj === ans.manager);
+            let managerID = managers[i].id;
+            inquireEmployeeData(roleID, managerID);
+        });
+    });
+};
 
+function inquireEmployeeData(role, manager) {
+    const questions = [{
+            type: 'input',
+            name: 'first_name',
+            message: "Enter new employee's first name.",
+            validate: function(value) {
+                var valid = !validator.isEmpty(value);
+                return valid || 'First name can not be empty.';
+            }
+        },
+        {
+            type: 'input',
+            name: 'last_name',
+            message: "Enter new employee's last name.",
+            validate: function(value) {
+                var valid = !validator.isEmpty(value);
+                return valid || 'Last name can not be empty.';
+            }
+        }
+    ];
+    inquirer.prompt(questions).then(answers => {
+        let { first_name, last_name } = answers;
+
+        connection.query(
+            "INSERT INTO employee (first_name, last_name, role_id, department_id) VALUES (?,?,?,?)", [answers.first_name, answers.last_name, roleID, managerID],
+            function(err, res) {
+                if (err) throw err;
+                console.log(`${answers.first_name} ${answers.last_name} sucessfully added as new employee.`);
+                start();
+            }
+        );
+    });
 };
 
 //////////////////////////////////////////////////////////
