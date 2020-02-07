@@ -227,32 +227,35 @@ function inquireManager(deptID, roleID) {
     ON r.department_id = d.id;`;
     dbhelper.query(query, res => {
         // console.log(res);
-        let managers = res.filter(obj => obj.manager_id === null && obj.dept_id === deptID);
-        let choices = managers.map(obj => {
+        const managers = res.filter(obj => obj.manager_id === null && obj.dept_id === deptID);
+        const choicesArray = managers.map(obj => {
             return `${obj.first_name} ${obj.last_name}`;
         });
-        choices.push("SKIP");
-        console.log(managers);
-        console.log(choices);
+        choicesArray.push("SKIP");
+        // console.log(managers);
+        // console.log(choices);
         const questions = [{
             type: 'list',
             name: 'manager',
             message: 'Choose manager for new employee.',
-            choices: choices,
+            choices: choicesArray,
         }];
         inquirer.prompt(questions).then(ans => {
-            console.log(ans);
-            if (ans.manager = "SKIP") {
+            console.log(ans.manager);
+            if (ans.manager === "SKIP") {
                 inquireEmployeeData(roleID, null);
             };
-            let i = choices.findIndex(obj => obj === ans.manager);
+            console.log(choicesArray);
+            let i = choicesArray.findIndex(obj => obj === ans.manager);
+            console.log("i", i);
+            console.log(managers);
             let managerID = managers[i].id;
             inquireEmployeeData(roleID, managerID);
         });
     });
 };
 
-function inquireEmployeeData(role, manager) {
+function inquireEmployeeData(roleID, managerID) {
     const questions = [{
             type: 'input',
             name: 'first_name',
@@ -276,7 +279,7 @@ function inquireEmployeeData(role, manager) {
         let { first_name, last_name } = answers;
 
         connection.query(
-            "INSERT INTO employee (first_name, last_name, role_id, department_id) VALUES (?,?,?,?)", [answers.first_name, answers.last_name, roleID, managerID],
+            "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answers.first_name, answers.last_name, roleID, managerID],
             function(err, res) {
                 if (err) throw err;
                 console.log(`${answers.first_name} ${answers.last_name} sucessfully added as new employee.`);
