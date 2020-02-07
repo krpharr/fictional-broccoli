@@ -131,11 +131,9 @@ function addRole() {
 function inquireRole(tbl) {
     let tb = cTable.getTable(tbl);
     console.log(tb);
-
     const choices = tbl.map(e => {
         return e.name;
     });
-
     const questions = [{
             type: 'input',
             name: 'title',
@@ -166,7 +164,6 @@ function inquireRole(tbl) {
         // console.log(answers.title);
         let i = tbl.findIndex(obj => obj.name === answers.dept);
         console.log(i, tbl[i]);
-
         connection.query(
             "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)", [answers.title, answers.salary, tbl[i].id],
             function(err, res) {
@@ -228,6 +225,7 @@ function inquireManager(deptID, roleID) {
     dbhelper.query(query, res => {
         // console.log(res);
         const managers = res.filter(obj => obj.manager_id === null && obj.dept_id === deptID);
+        if (managers.length === 0) inquireEmployeeData(roleID, null);
         const choicesArray = managers.map(obj => {
             return `${obj.first_name} ${obj.last_name}`;
         });
@@ -244,13 +242,14 @@ function inquireManager(deptID, roleID) {
             console.log(ans.manager);
             if (ans.manager === "SKIP") {
                 inquireEmployeeData(roleID, null);
-            };
-            console.log(choicesArray);
-            let i = choicesArray.findIndex(obj => obj === ans.manager);
-            console.log("i", i);
-            console.log(managers);
-            let managerID = managers[i].id;
-            inquireEmployeeData(roleID, managerID);
+            } else {
+                console.log(choicesArray);
+                let i = choicesArray.findIndex(obj => obj === ans.manager);
+                console.log("i", i);
+                console.log(managers);
+                let managerID = managers[i].id;
+                inquireEmployeeData(roleID, managerID);
+            }
         });
     });
 };
@@ -277,7 +276,6 @@ function inquireEmployeeData(roleID, managerID) {
     ];
     inquirer.prompt(questions).then(answers => {
         let { first_name, last_name } = answers;
-
         connection.query(
             "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answers.first_name, answers.last_name, roleID, managerID],
             function(err, res) {
@@ -485,10 +483,67 @@ function update() {
 };
 
 function updateEmployeeRole() {
+    // pick employee
+    dbhelper.selectAll("employee", res => {
+        dbhelper.displayTable(res);
+        const choicesArray = res.map(obj => {
+            return `${obj.first_name} ${obj.last_name}`;
+        });
+        const questions = [{
+            type: 'list',
+            name: 'employee',
+            message: "Pick employee:",
+            choices: choicesArray,
+        }];
+        inquirer.prompt(questions).then(answers => {
+            console.log(answers.employee);
+            let i = choicesArray.findIndex(obj => obj === answers.employee);
+            const employeeID = res[i].id;
+            console.log(res[i]);
+            // pick new role 
+            dbhelper.selectAll("role", res => {
+                dbhelper.displayTable(res);
+                const rolesArray = res.map(obj => {
+                    return `${obj.title} salary: ${obj.salary} dept_id: ${obj.department_id}`;
+                });
+                const questions = [{
+                    type: 'list',
+                    name: 'role',
+                    message: "Pick role:",
+                    choices: rolesArray,
+                }];
+                inquirer.prompt(questions).then(answers => {
+                    console.log(answers.role);
+                    let i = rolesArray.findIndex(obj => obj === answers.role);
+                    const roleID = res[i].id;
+                    // update
+                    let query = `UPDATE employee SET role_id = ${roleID}, manager_id = null WHERE id = ${employeeID}`;
+                    dbhelper.query(query, res => {
+                        console.log(res);
+                        console.log("Employee role updated.");
+                        start();
+                    });
+                });
+            });
+        });
 
+    });
+
+
+    //return to start
 };
 
 function updateEmployeeManager() {
+    // pick employee
+
+
+    // pick new manager  
+
+
+    // update
+
+
+    //return to start
 
 };
 
