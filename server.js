@@ -62,12 +62,12 @@ function start() {
 
 ////////////////////////////////////////////////////////////
 function add() {
-    let msg = `ADD - departments, roles, and employees.`;
-    console.log(msg);
+    // let msg = `ADD - departments, roles, and employees.`;
+    // console.log(msg);
     const questions = [{
         type: 'list',
         name: 'action',
-        message: 'Select option',
+        message: 'ADD:',
         choices: [
             'Department',
             'Role',
@@ -94,10 +94,10 @@ function add() {
 };
 
 function addDepartment() {
-    dbhelper.selectAll("department", inquireDepartment);
+    dbhelper.selectAll("department", inquireAddDepartment);
 };
 
-function inquireDepartment(tbl) {
+function inquireAddDepartment(tbl) {
     let tb = cTable.getTable(tbl);
     console.log("Current Departments")
     console.log(tb);
@@ -176,9 +176,45 @@ function inquireRole(tbl) {
             }
         );
     });
-}
+};
 
 function addEmployee() {
+    dbhelper.selectAll("department", inquireDepartmentForEmployee);
+};
+
+function inquireDepartmentForEmployee(deptTable) {
+    dbhelper.displayTable(deptTable);
+    let depts = deptTable.map(e => {
+        return [e.id, e.name];
+    });
+    const questions = [{
+        type: 'list',
+        name: 'department',
+        message: 'Choose department for new employee.',
+        choices: depts[1],
+    }];
+    inquirer.prompt(questions).then(answers => {
+        let query = `SELECT * FROM role WHERE department_id = (${answers.department[0]})`;
+        dbhelper.query(query, res => {
+            dbhelper.displayTable(res);
+            let roles = res.map(e => {
+                return [e.id, e.title]
+            });
+            const questions2 = [{
+                type: 'list',
+                name: 'title',
+                message: 'Choose title for new employee.',
+                choices: roles,
+            }];
+            inquirer.prompt(questions2).then(ans => {
+
+                console.log(ans);
+            });
+        });
+    });
+};
+
+function inquireEmployeeData() {
 
 };
 
