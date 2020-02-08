@@ -6,6 +6,7 @@ const DbHelper = require("./lib/DbHelper");
 
 let dbhelper;
 
+
 const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -96,8 +97,9 @@ function addDepartment() {
 };
 
 function inquireAddDepartment(tbl) {
+
     let tb = cTable.getTable(tbl);
-    console.log("Current Departments")
+    console.log("\nCurrent Departments\n")
     console.log(tb);
     const questions = [{
         type: 'input',
@@ -113,8 +115,8 @@ function inquireAddDepartment(tbl) {
             "INSERT INTO department (name) VALUES (?)", [answers.name],
             function(err, res) {
                 if (err) throw err;
-                console.log(`${answers.name} sucessfully added to database.`);
-                add();
+                console.log(`\n${answers.name} sucessfully added to database.\n`);
+                start();
             }
         );
     });
@@ -127,6 +129,7 @@ function addRole() {
 
 function inquireRole(tbl) {
     let tb = cTable.getTable(tbl);
+    console.log("\n");
     console.log(tb);
     const choices = tbl.map(e => {
         return e.name;
@@ -164,8 +167,8 @@ function inquireRole(tbl) {
             "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)", [answers.title, answers.salary, tbl[i].id],
             function(err, res) {
                 if (err) throw err;
-                console.log(`${answers.title} role sucessfully added to ${answers.dept} department.`);
-                add();
+                console.log(`\n${answers.title} role sucessfully added to ${answers.dept} department.\n`);
+                start();
             }
         );
     });
@@ -189,11 +192,17 @@ function inquireDepartmentForEmployee(deptTable) {
     inquirer.prompt(questions).then(answers => {
         let i = depts.findIndex(obj => obj === answers.department);
         let deptID = deptTable[i].id;
-        let query = `SELECT * FROM role WHERE department_id = (${deptID})`;
+        let query = `SELECT role.id as id, role.title as title, role.salary , department.name as department
+        FROM role
+        LEFT JOIN department 
+        ON role.department_id = department.id
+        WHERE role.department_id = ${deptID}
+        ORDER BY role.salary DESC;`;
+        //let query = `SELECT * FROM role WHERE department_id = (${deptID})`;
         dbhelper.query(query, res => {
             dbhelper.displayTable(res);
             const roles = res.map(e => {
-                return e.title;
+                return `${e.id} ${e.title} ${e.department}`;
             });
             const questions2 = [{
                 type: 'list',
@@ -204,7 +213,8 @@ function inquireDepartmentForEmployee(deptTable) {
             inquirer.prompt(questions2).then(ans => {
                 let i = roles.findIndex(obj => obj === ans.title);
                 let roleID = res[i].id;
-                inquireManager(deptID, roleID);
+                //inquireManager(deptID, roleID); 
+                inquireEmployeeData(roleID, null);
             });
         });
     });
@@ -219,7 +229,7 @@ function inquireManager(deptID, roleID) {
     INNER JOIN department as d
     ON r.department_id = d.id;`;
     dbhelper.query(query, res => {
-        // console.log(res);
+        dbhelper.displayTable(res);
         const managers = res.filter(obj => obj.manager_id === null && obj.dept_id === deptID);
         if (managers.length === 0) inquireEmployeeData(roleID, null);
         const choicesArray = managers.map(obj => {
@@ -272,7 +282,7 @@ function inquireEmployeeData(roleID, managerID) {
             "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)", [answers.first_name, answers.last_name, roleID, managerID],
             function(err, res) {
                 if (err) throw err;
-                console.log(`${answers.first_name} ${answers.last_name} sucessfully added as new employee.`);
+                console.log(`\n${answers.first_name} ${answers.last_name} sucessfully added as new employee.\nSet employee's managager by UPDATE -> Employee Manager.\n`);
                 start();
             }
         );
@@ -329,12 +339,23 @@ function viewDepartments() {
 };
 
 function viewRoles() {
-    dbhelper.innerLeftJoin("role", "department",
-        "role.title as role, role.salary , department.name as department",
-        "role.department_id = department.id", res => {
-            dbhelper.displayTable(res);
-            start();
-        });
+    let query = `SELECT role.id, role.title as role, role.salary , department.name as department
+FROM role
+LEFT JOIN department
+ON role.department_id = department.id
+ORDER BY department, salary DESC`;
+
+    dbhelper.query(query, res => {
+        dbhelper.displayTable(res);
+        start();
+    });
+
+    // dbhelper.innerLeftJoin("role", "department",
+    //     "role.title as role, role.salary , department.name as department",
+    //     "role.department_id = department.id", res => {
+    //         dbhelper.displayTable(res);
+    //         start();
+    //     });
 };
 
 function viewEmployees() {
@@ -349,7 +370,7 @@ INNER JOIN department d
  ON r.department_id = d.id
 LEFT OUTER JOIN employee m
  ON e.manager_id = m.id
-ORDER BY r.salary DESC;`;
+ORDER BY d.name, r.salary DESC;`;
 
     dbhelper.query(query, res => {
         dbhelper.displayTable(res);
@@ -370,7 +391,7 @@ INNER JOIN department d
 ON r.department_id = d.id
 INNER JOIN employee m
 ON e.manager_id = m.id
-ORDER BY e.manager_id;
+ORDER BY e.manager_id, r.salary DESC;
  `;
     dbhelper.query(query, inquireEmployeesByManager);
 };
@@ -496,7 +517,7 @@ INNER JOIN department d
  ON r.department_id = d.id
 LEFT OUTER JOIN employee m
  ON e.manager_id = m.id
-ORDER BY r.salary DESC;`;
+ORDER BY department, r.salary DESC;`;
 
     dbhelper.query(query, res => {
         dbhelper.displayTable(res);
@@ -512,7 +533,7 @@ ORDER BY r.salary DESC;`;
         }];
         inquirer.prompt(questions).then(answers => {
             if (answers.employee === "CANCEL") {
-                remove();
+                start();
             } else {
                 let i = choicesArray.findIndex(obj => obj === answers.employee);
                 const employeeID = res[i].id;
@@ -525,7 +546,7 @@ ORDER BY r.salary DESC;`;
 function selectManager(callback) {
     let query = `SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
     d.name as department,
-    r.title,r.salary, 
+    r.title as title,r.salary, 
     concat(m.first_name, ' ', m.last_name) as manager
 FROM employee e 
 INNER JOIN role r
@@ -539,7 +560,7 @@ ORDER BY r.salary DESC;`;
     dbhelper.query(query, res => {
         dbhelper.displayTable(res);
         const choicesArray = res.map(obj => {
-            return `${obj.first_name} ${obj.last_name}`;
+            return `${obj.employee} ${obj.department} ${obj.title}`;
         });
         choicesArray.push("CANCEL");
         const questions = [{
@@ -550,7 +571,7 @@ ORDER BY r.salary DESC;`;
         }];
         inquirer.prompt(questions).then(answers => {
             if (answers.employee === "CANCEL") {
-                remove();
+                start();
             } else {
                 let i = choicesArray.findIndex(obj => obj === answers.manager);
                 const managerID = res[i].id;
@@ -564,7 +585,8 @@ function selectRole(callback) {
     let query = `SELECT role.id, role.title as role, role.salary , department.name as department
     FROM role
     LEFT JOIN department 
-    ON role.department_id = department.id;`;
+    ON role.department_id = department.id
+    ORDER BY department, role.salary DESC;`;
     dbhelper.query(query, res => {
         dbhelper.displayTable(res);
         const rolesArray = res.map(obj => {
@@ -579,7 +601,7 @@ function selectRole(callback) {
         }];
         inquirer.prompt(questions).then(answers => {
             if (answers.role === "CANCEL") {
-                remove();
+                start();
             } else {
                 let i = rolesArray.findIndex(obj => obj === answers.role);
                 const roleID = res[i].id;
@@ -604,7 +626,7 @@ function selectDepartment(callback) {
         }];
         inquirer.prompt(questions).then(answers => {
             if (answers.department === "CANCEL") {
-                remove();
+                start();
             } else {
                 let i = departmentArray.findIndex(obj => obj === answers.department);
                 const departmentID = res[i].id;
@@ -619,7 +641,7 @@ function updateEmployeeRole() {
         selectRole(rID => {
             let query = `UPDATE employee SET role_id = ${rID}, manager_id = null WHERE id = ${eID}`;
             dbhelper.query(query, res => {
-                console.log("Employee role updated.");
+                console.log("\nEmployee role updated.\n");
                 start();
             });
         });
@@ -632,7 +654,7 @@ function updateEmployeeManager() {
         selectManager(mID => {
             let query = `UPDATE employee SET manager_id = ${mID} WHERE id = ${eID}`;
             dbhelper.query(query, res => {
-                console.log("Employee role updated.");
+                console.log("\nEmployee role updated.\n");
                 start();
             });
         });
@@ -674,8 +696,8 @@ function deleteEmployee() {
     selectEmployee(eID => {
         let query = `DELETE FROM employee WHERE id = ${eID};`;
         dbhelper.query(query, res => {
-            console.log("Employee removed.");
-            remove();
+            console.log("\nEmployee removed.\n");
+            start();
         });
     });
 };
@@ -685,11 +707,11 @@ function deleteRole() {
         let query = `DELETE FROM role WHERE id = ${rID};`;
         dbhelper.query(query, res => {
             if (res.length < 1) {
-                console.log("Role has employees associated with it and can not be deleted until employee is removed.")
+                console.log("\nRole has employees associated with it and can not be deleted until employee is removed.\n")
             } else {
-                console.log("Role deleted.");
+                console.log("\nRole deleted.\n");
             }
-            remove();
+            start();
         });
     });
 
@@ -700,11 +722,11 @@ function deleteDepartment() {
         let query = `DELETE FROM department WHERE id = ${dID};`;
         dbhelper.query(query, res => {
             if (res.length < 1) {
-                console.log("Department has roles associated with it and can not be deleted until roles are removed.")
+                console.log("\nDepartment has roles associated with it and can not be deleted until roles are removed.\n")
             } else {
-                console.log("Department deleted.");
+                console.log("\nDepartment deleted.\n");
             }
-            remove();
+            start();
         });
     });
 };

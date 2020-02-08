@@ -31,7 +31,7 @@ CREATE TABLE employee (
     FOREIGN KEY (role_id) 
         REFERENCES role(id)
         ON UPDATE CASCADE
-        ON DELETE CASCADE,
+        ON DELETE RESTRICT,
 	CONSTRAINT `fk_employee_manager`
 	FOREIGN KEY (manager_id) 
         REFERENCES employee(id)
@@ -42,23 +42,27 @@ CREATE TABLE employee (
 
 INSERT INTO department (name) VALUES ("HR");
 INSERT INTO department (name) VALUES ("IT");
-INSERT INTO department (name) VALUES ("Marketing");
+INSERT INTO department (name) VALUES ("Finance");
 
 INSERT INTO role (title, salary, department_id) VALUES ("HR Manager", 80000.00,1);
 INSERT INTO role (title, salary, department_id) VALUES ("IT Manager", 80000.00,2);
-INSERT INTO role (title, salary, department_id) VALUES ("Marketing Manager", 80000.00,3);
+INSERT INTO role (title, salary, department_id) VALUES ("CFO", 180000.00,3);
 INSERT INTO role (title, salary, department_id) VALUES ("Online Rep", 45000.00,1);
 INSERT INTO role (title, salary, department_id) VALUES ("Help Desk Analyst", 45000.00,2);
-INSERT INTO role (title, salary, department_id) VALUES ("Junior Programmer", 50000.00,2);
-INSERT INTO role (title, salary, department_id) VALUES ("Graphic Designer", 60000.00,3);
+INSERT INTO role (title, salary, department_id) VALUES ("Junior Programmer", 60000.00,2);
+INSERT INTO role (title, salary, department_id) VALUES ("Senior Programmer", 70000.00,2);
+INSERT INTO role (title, salary, department_id) VALUES ("Accountant", 60000.00,3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Bob", "Peckman", 1, NULL);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Frommovie", 4, 1);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Fred", "Hass", 2, NULL);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Nancy", "Drew", 6, 3);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Clark", "Kent", 6, 3);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Frommovie", 2, NULL);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Fred", "Hass", 3, NULL);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Nancy", "Drew", 4, 1);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Clark", "Kent", 5, 2);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Leslie", "Snead", 6, 2);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Jerry", "Bergonzi", 7, 2);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Linda", "Oh", 8, 3);
 
-SELECT e.id, e.last_name, d.name as dept
+SELECT e.id, e.manager_id, d.name as dept
 FROM employee AS e
 INNER JOIN role as r
 ON r.id = e.role_id
@@ -93,14 +97,17 @@ UPDATE role SET salary = "82000.00" WHERE id = 2;
 
 select * FROM department;
 
-SELECT * FROM role WHERE department_id = ;
+SELECT * FROM role;
 
 SELECT * FROM employee;
 
-SELECT role.title as role, role.salary , department.name as department
+UPDATE employee SET role_id = 4, manager_id = null WHERE id = 6;
+
+SELECT role.id, role.title as role, role.salary , department.name as department
 FROM role
 LEFT JOIN `department` 
-ON role.department_id = department.id;
+ON role.department_id = department.id
+WHERE role.department_id = 2;
 
 -- view employee info
 SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
