@@ -1,9 +1,11 @@
 # fictional-broccoli
 
 Manage your departments, employee titles, and employees with this employee content management system!
-ADD - add departments, roles, and employees.
-VIEW - view departments, roles, employees, employees by manager, and utilized budget by department.
-UPDATE - update employee roles and employee managers.
+<ul>
+<li>ADD - add departments, roles, and employees.</li>
+<li>VIEW - view departments, roles, employees, employees by manager, and utilized budget by department.</li>
+<li>UPDATE - update employee roles and employee managers.</li>
+</ul>
 
 ## installation
 

@@ -6,7 +6,6 @@ const DbHelper = require("./lib/DbHelper");
 
 let dbhelper;
 
-
 const connection = mysql.createConnection({
     host: "localhost",
     port: 3306,
@@ -161,7 +160,6 @@ function inquireRole(tbl) {
         }
     ];
     inquirer.prompt(questions).then(answers => {
-        // console.log(answers.title);
         let i = tbl.findIndex(obj => obj.name === answers.dept);
         connection.query(
             "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)", [answers.title, answers.salary, tbl[i].id],
@@ -236,8 +234,6 @@ function inquireManager(deptID, roleID) {
             return `${obj.first_name} ${obj.last_name}`;
         });
         choicesArray.push("SKIP");
-        // console.log(managers);
-        // console.log(choices);
         const questions = [{
             type: 'list',
             name: 'manager',
@@ -288,8 +284,6 @@ function inquireEmployeeData(roleID, managerID) {
         );
     });
 };
-
-//////////////////////////////////////////////////////////
 
 function view() {
     let msg = `VIEW - departments, roles, employees, employees by manager, and utilized budget by department.`;
@@ -349,13 +343,6 @@ ORDER BY department, salary DESC`;
         dbhelper.displayTable(res);
         start();
     });
-
-    // dbhelper.innerLeftJoin("role", "department",
-    //     "role.title as role, role.salary , department.name as department",
-    //     "role.department_id = department.id", res => {
-    //         dbhelper.displayTable(res);
-    //         start();
-    //     });
 };
 
 function viewEmployees() {
@@ -376,7 +363,6 @@ ORDER BY d.name, r.salary DESC;`;
         dbhelper.displayTable(res);
         start();
     });
-
 };
 
 function viewEmployeesByManager() {
@@ -455,7 +441,6 @@ function inquireDepartment(table) {
     WHERE d.name = "${answers.action}";`;
         dbhelper.query(query, calcBudget);
     });
-
 };
 
 function calcBudget(table) {
@@ -466,17 +451,13 @@ function calcBudget(table) {
     let budget = bArray.reduce((total, num) => {
         return total + num;
     });
-
     let budgetTable = [{
         department: dept,
         "utilized budget": budget
     }];
     dbhelper.displayTable(budgetTable);
     start();
-
 };
-
-///////////////////////////////////////////
 
 function update() {
     let msg = `UPDATE - employee roles and employee managers.`;
@@ -714,7 +695,6 @@ function deleteRole() {
             start();
         });
     });
-
 };
 
 function deleteDepartment() {
@@ -730,87 +710,3 @@ function deleteDepartment() {
         });
     });
 };
-
-// function login() {
-//     const questions = [{
-//             type: 'input',
-//             name: 'username',
-//             message: 'username:',
-//             validate: function(value) {
-//                 var valid = !validator.isEmpty(value);
-//                 return valid || 'username can not be empty.';
-//             }
-//         },
-//         {
-//             type: 'password',
-//             message: 'password:',
-//             name: 'password',
-//             mask: '*',
-//             validate: function(value) {
-//                 var valid = !validator.isEmpty(value);
-//                 return valid || 'password can not be empty.';
-//             }
-//         }
-//     ];
-//     inquirer.prompt(questions).then(answers => {
-//         console.log(answers.username, answers.password);
-//         let { username: user, password } = answers;
-//         connectUser(user, password);
-//     });
-// };
-
-// function connectUser(user, password) {
-//     connection = mysql.createConnection({
-//         host: "localhost",
-//         port: 3306,
-//         user: user,
-//         password: password,
-//     });
-//     connection.connect(function(err) {
-//         if (err) throw err;
-//         console.log("connected as id " + connection.threadId + "\n");
-//         // if (databaseExists()) {
-//         //     //inquireModifyDatabase();
-//         //     start();
-//         // } else {
-//         //     buildDatabase();
-//         // }
-//         databaseExists().then(res => {
-//             console.log(res);
-//         });
-//     });
-// };
-
-// async function databaseExists() {
-//     try {
-//         let connected;
-//         connected = await connection.changeUser({ database: 'cms_db' }, function(err) {
-//             // if (err) return false;
-//             // else return true;
-//         });
-//         return connected;
-//     } catch (err) {
-
-//     }
-//     //return boolean if project database already exists in mysql
-//     // let connected = false;
-//     // connection.changeUser({ database: 'cms_db' }, function(err) {
-//     //     if (err) connected = false;
-//     //     else connected = true;
-//     // });
-//     // return connected;
-
-// };
-
-// function buildDatabase() {
-
-// };
-
-///////////////////////////////////////////////////////////////////////
-
-
-// login();
-
-// connection.changeUser({ database: 'my_database' }, function(err) {
-//     if (err) throw err;
-// });
