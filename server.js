@@ -22,15 +22,13 @@ connection.connect(function(err) {
 });
 
 function start() {
-    let msg = `
-    ADD - add departments, roles, and employees.
-    VIEW - view departments, roles, employees, employees by manager, and utilized budget by department.
-    UPDATE - update employee roles and employee managers.`;
-    console.log(msg);
+    let msg = "ADD - add departments, roles, and employees.\n";
+    msg += "VIEW - view departments, roles, employees, employees by manager, and utilized budget by department.\n";
+    msg += "UPDATE - update employee roles and employee managers.";
     const questions = [{
         type: 'list',
         name: 'action',
-        message: 'Select option',
+        message: msg,
         choices: [
             'ADD',
             'VIEW',
@@ -111,7 +109,6 @@ function inquireAddDepartment(tbl) {
         }
     }];
     inquirer.prompt(questions).then(answers => {
-        console.log(answers.name);
         connection.query(
             "INSERT INTO department (name) VALUES (?)", [answers.name],
             function(err, res) {
@@ -163,7 +160,6 @@ function inquireRole(tbl) {
     inquirer.prompt(questions).then(answers => {
         // console.log(answers.title);
         let i = tbl.findIndex(obj => obj.name === answers.dept);
-        console.log(i, tbl[i]);
         connection.query(
             "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)", [answers.title, answers.salary, tbl[i].id],
             function(err, res) {
@@ -239,14 +235,10 @@ function inquireManager(deptID, roleID) {
             choices: choicesArray,
         }];
         inquirer.prompt(questions).then(ans => {
-            console.log(ans.manager);
             if (ans.manager === "SKIP") {
                 inquireEmployeeData(roleID, null);
             } else {
-                console.log(choicesArray);
                 let i = choicesArray.findIndex(obj => obj === ans.manager);
-                console.log("i", i);
-                console.log(managers);
                 let managerID = managers[i].id;
                 inquireEmployeeData(roleID, managerID);
             }
@@ -330,13 +322,19 @@ function view() {
 };
 
 function viewDepartments() {
-    dbhelper.selectAll("department", dbhelper.displayTable);
+    dbhelper.selectAll("department", res => {
+        dbhelper.displayTable(res);
+        start();
+    });
 };
 
 function viewRoles() {
     dbhelper.innerLeftJoin("role", "department",
         "role.title as role, role.salary , department.name as department",
-        "role.department_id = department.id", dbhelper.displayTable);
+        "role.department_id = department.id", res => {
+            dbhelper.displayTable(res);
+            start();
+        });
 };
 
 function viewEmployees() {
@@ -353,7 +351,10 @@ LEFT OUTER JOIN employee m
  ON e.manager_id = m.id
 ORDER BY r.salary DESC;`;
 
-    dbhelper.query(query, dbhelper.displayTable);
+    dbhelper.query(query, res => {
+        dbhelper.displayTable(res);
+        start();
+    });
 
 };
 
@@ -450,6 +451,7 @@ function calcBudget(table) {
         "utilized budget": budget
     }];
     dbhelper.displayTable(budgetTable);
+    start();
 
 };
 
@@ -482,13 +484,26 @@ function update() {
     });
 };
 
-function updateEmployeeRole() {
-    // pick employee
-    dbhelper.selectAll("employee", res => {
+function selectEmployee(callback) {
+    let query = `SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
+    d.name as department,
+    r.title,r.salary, 
+    concat(m.first_name, ' ', m.last_name) as manager
+FROM employee e 
+INNER JOIN role r
+ ON e.role_id=r.id
+INNER JOIN department d
+ ON r.department_id = d.id
+LEFT OUTER JOIN employee m
+ ON e.manager_id = m.id
+ORDER BY r.salary DESC;`;
+
+    dbhelper.query(query, res => {
         dbhelper.displayTable(res);
         const choicesArray = res.map(obj => {
-            return `${obj.first_name} ${obj.last_name}`;
+            return `${obj.employee} ${obj.department} ${obj.title}`;
         });
+        choicesArray.push("CANCEL");
         const questions = [{
             type: 'list',
             name: 'employee',
@@ -496,61 +511,202 @@ function updateEmployeeRole() {
             choices: choicesArray,
         }];
         inquirer.prompt(questions).then(answers => {
-            console.log(answers.employee);
-            let i = choicesArray.findIndex(obj => obj === answers.employee);
-            const employeeID = res[i].id;
-            console.log(res[i]);
-            // pick new role 
-            dbhelper.selectAll("role", res => {
-                dbhelper.displayTable(res);
-                const rolesArray = res.map(obj => {
-                    return `${obj.title} salary: ${obj.salary} dept_id: ${obj.department_id}`;
-                });
-                const questions = [{
-                    type: 'list',
-                    name: 'role',
-                    message: "Pick role:",
-                    choices: rolesArray,
-                }];
-                inquirer.prompt(questions).then(answers => {
-                    console.log(answers.role);
-                    let i = rolesArray.findIndex(obj => obj === answers.role);
-                    const roleID = res[i].id;
-                    // update
-                    let query = `UPDATE employee SET role_id = ${roleID}, manager_id = null WHERE id = ${employeeID}`;
-                    dbhelper.query(query, res => {
-                        console.log(res);
-                        console.log("Employee role updated.");
-                        start();
-                    });
-                });
+            if (answers.employee === "CANCEL") {
+                remove();
+            } else {
+                let i = choicesArray.findIndex(obj => obj === answers.employee);
+                const employeeID = res[i].id;
+                callback(employeeID);
+            }
+        });
+    });
+};
+
+function selectManager(callback) {
+    let query = `SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
+    d.name as department,
+    r.title,r.salary, 
+    concat(m.first_name, ' ', m.last_name) as manager
+FROM employee e 
+INNER JOIN role r
+ ON e.role_id=r.id
+INNER JOIN department d
+ ON r.department_id = d.id
+LEFT OUTER JOIN employee m
+ ON e.manager_id = m.id
+ORDER BY r.salary DESC;`;
+
+    dbhelper.query(query, res => {
+        dbhelper.displayTable(res);
+        const choicesArray = res.map(obj => {
+            return `${obj.first_name} ${obj.last_name}`;
+        });
+        choicesArray.push("CANCEL");
+        const questions = [{
+            type: 'list',
+            name: 'manager',
+            message: "Pick manager:",
+            choices: choicesArray,
+        }];
+        inquirer.prompt(questions).then(answers => {
+            if (answers.employee === "CANCEL") {
+                remove();
+            } else {
+                let i = choicesArray.findIndex(obj => obj === answers.manager);
+                const managerID = res[i].id;
+                callback(managerID);
+            };
+        });
+    });
+};
+
+function selectRole(callback) {
+    let query = `SELECT role.id, role.title as role, role.salary , department.name as department
+    FROM role
+    LEFT JOIN department 
+    ON role.department_id = department.id;`;
+    dbhelper.query(query, res => {
+        dbhelper.displayTable(res);
+        const rolesArray = res.map(obj => {
+            return `${obj.role} salary: ${obj.salary} dept: ${obj.department}`;
+        });
+        rolesArray.push("CANCEL");
+        const questions = [{
+            type: 'list',
+            name: 'role',
+            message: "Pick role:",
+            choices: rolesArray,
+        }];
+        inquirer.prompt(questions).then(answers => {
+            if (answers.role === "CANCEL") {
+                remove();
+            } else {
+                let i = rolesArray.findIndex(obj => obj === answers.role);
+                const roleID = res[i].id;
+                callback(roleID);
+            };
+        });
+    });
+};
+
+function selectDepartment(callback) {
+    dbhelper.selectAll("department", res => {
+        dbhelper.displayTable(res);
+        const departmentArray = res.map(obj => {
+            return obj.name;
+        });
+        departmentArray.push("CANCEL");
+        const questions = [{
+            type: 'list',
+            name: 'department',
+            message: "Pick department:",
+            choices: departmentArray,
+        }];
+        inquirer.prompt(questions).then(answers => {
+            if (answers.department === "CANCEL") {
+                remove();
+            } else {
+                let i = departmentArray.findIndex(obj => obj === answers.department);
+                const departmentID = res[i].id;
+                callback(departmentID);
+            };
+        });
+    });
+};
+
+function updateEmployeeRole() {
+    selectEmployee(eID => {
+        selectRole(rID => {
+            let query = `UPDATE employee SET role_id = ${rID}, manager_id = null WHERE id = ${eID}`;
+            dbhelper.query(query, res => {
+                console.log("Employee role updated.");
+                start();
             });
         });
-
     });
-
-
-    //return to start
 };
 
 function updateEmployeeManager() {
     // pick employee
+    selectEmployee(eID => {
+        selectManager(mID => {
+            let query = `UPDATE employee SET manager_id = ${mID} WHERE id = ${eID}`;
+            dbhelper.query(query, res => {
+                console.log("Employee role updated.");
+                start();
+            });
+        });
+    });
+};
 
 
-    // pick new manager  
+function remove() {
+    const questions = [{
+        type: 'list',
+        name: 'action',
+        message: 'Delete',
+        choices: [
+            'Employee',
+            'Role',
+            'Department',
+            '<- Back'
+        ],
+    }];
+    inquirer.prompt(questions).then(answers => {
+        switch (answers.action) {
+            case 'Employee':
+                deleteEmployee();
+                break;
+            case 'Role':
+                deleteRole();
+                break;
+            case 'Department':
+                deleteDepartment();
+                break;
+            case '<- Back':
+                start();
+                break;
+        }
+    });
+};
 
+function deleteEmployee() {
+    selectEmployee(eID => {
+        let query = `DELETE FROM employee WHERE id = ${eID};`;
+        dbhelper.query(query, res => {
+            console.log("Employee removed.");
+            remove();
+        });
+    });
+};
 
-    // update
-
-
-    //return to start
+function deleteRole() {
+    selectRole(rID => {
+        let query = `DELETE FROM role WHERE id = ${rID};`;
+        dbhelper.query(query, res => {
+            if (res.length < 1) {
+                console.log("Role has employees associated with it and can not be deleted until employee is removed.")
+            } else {
+                console.log("Role deleted.");
+            }
+            remove();
+        });
+    });
 
 };
 
-///////////////////////////////////////////////////////////////////////
-
-function remove() {
-
+function deleteDepartment() {
+    selectDepartment(dID => {
+        let query = `DELETE FROM department WHERE id = ${dID};`;
+        dbhelper.query(query, res => {
+            if (res.length < 1) {
+                console.log("Department has roles associated with it and can not be deleted until roles are removed.")
+            } else {
+                console.log("Department deleted.");
+            }
+            remove();
+        });
+    });
 };
 
 // function login() {
