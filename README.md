@@ -17,7 +17,7 @@ npm install
 
 use database schema and seed files in /db directory to build and seed cms_db database
 
-edit password in server.js
+edit username password for mysql connection in server.js
 
 npm start
 
