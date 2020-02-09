@@ -68,7 +68,7 @@ INNER JOIN role as r
 ON r.id = e.role_id
 INNER JOIN department as d
 ON r.department_id = d.id;
-WHERE e.manager_id = NULL;
+
 
 DELETE FROM role WHERE id = 1;
 DELETE FROM department WHERE id = 1;
@@ -107,7 +107,7 @@ SELECT role.id, role.title as role, role.salary , department.name as department
 FROM role
 LEFT JOIN `department` 
 ON role.department_id = department.id
-WHERE role.department_id = 2;
+ORDER BY department, salary DESC;
 
 -- view employee info
 SELECT e.id,concat(e.first_name, ' ', e.last_name) as employee,
@@ -121,7 +121,7 @@ INNER JOIN department d
 	ON r.department_id = d.id
 LEFT OUTER JOIN employee m
 	ON e.manager_id = m.id
-ORDER BY r.salary DESC;
+ORDER BY d.name, r.salary DESC;
 
 -- view employee by manager
 SELECT e.id, concat(e.first_name, ' ', e.last_name) as employee, 

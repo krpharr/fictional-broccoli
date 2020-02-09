@@ -12,10 +12,10 @@ INSERT INTO role (title, salary, department_id) VALUES ("Senior Programmer", 700
 INSERT INTO role (title, salary, department_id) VALUES ("Accountant", 60000.00,3);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Bob", "Peckman", 1, NULL);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Frommovie", 2, NULL);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Hal", "Lett", 2, NULL);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Fred", "Hass", 3, NULL);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Nancy", "Drew", 4, 1);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Clark", "Kent", 5, 2);
-INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Leslie", "Snead", 6, 2);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Clair", "Kent", 5, 2);
+INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Leslie", "Gourdet", 6, 2);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Jerry", "Bergonzi", 7, 2);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Linda", "Oh", 8, 3);
